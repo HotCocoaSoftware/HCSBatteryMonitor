@@ -12,6 +12,7 @@
 @interface ViewController () <HCSBatteryMonitorDelegate>
 
 @property (nonatomic, strong) UITextView *textView;
+@property (nonatomic, strong) HCSBatteryMonitor *batteryMonitor;
 
 @end
 
@@ -23,9 +24,9 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     [self logToScreen:@"Started Monitorng"];
-    [[HCSBatteryMonitor sharedManager] startMonitoring];
-    [HCSBatteryMonitor sharedManager].reportOnCharging = YES;
-    [HCSBatteryMonitor sharedManager].delegate = self;
+    self.batteryMonitor.delegate = self;
+    [self.batteryMonitor startMonitoring];
+    [self.batteryMonitor notifyForBatteryLevels:@[@20, @30, @40]];
 }
 
 #pragma mark - HCSBatteryMonitorDelegate
@@ -99,6 +100,14 @@
 }
 
 #pragma mark - Lazy Initializer
+
+- (HCSBatteryMonitor *)batteryMonitor {
+    if (!_batteryMonitor) {
+        _batteryMonitor = [HCSBatteryMonitor sharedManager];
+    }
+    
+    return _batteryMonitor;
+}
 
 - (UITextView *)textView {
     if (!_textView) {

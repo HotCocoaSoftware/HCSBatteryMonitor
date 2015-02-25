@@ -9,27 +9,26 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-
 @protocol HCSBatteryMonitorDelegate;
-
-@interface HCSBatteryMonitor : NSObject
 
 typedef NS_ENUM(NSInteger, HCSBatteryLevel) {
     HCSBatteryLevelUnknown = 0,
-    HCSBatteryLevelCriticallyLow,   // Less tha 10%
-    HCSBatteryLevelLow,             // Less tha 20%
-    HCSBatteryLevelNormal,          // Less tha 20-99%%
+    HCSBatteryLevelCriticallyLow,   // Less than 10%
+    HCSBatteryLevelLow,             // Less than 20%
+    HCSBatteryLevelNormal,          // Less than 20-99%%
     HCSBatteryLevelFull             // Fully Charged
 };
 
-@property (nonatomic, strong) id<HCSBatteryMonitorDelegate> delegate;
+@interface HCSBatteryMonitor : NSObject
 
-@property (nonatomic, strong)   NSArray                 *customPercentages;
-@property (nonatomic)           BOOL                    reportOnCharging;           //Default value is YES
+@property (nonatomic, strong) id<HCSBatteryMonitorDelegate> delegate;
+@property (nonatomic) BOOL reportOnlyOnDischarging;           //Default value is YES
 
 + (instancetype)sharedManager;
 - (void)startMonitoring;
 - (void)stopMonitoring;
+- (void)notifyForBatteryLevel:(NSInteger)percentage;
+- (void)notifyForBatteryLevels:(NSArray *)percentages;
 
 - (BOOL)isPlugged;
 - (BOOL)isFullyCharged;

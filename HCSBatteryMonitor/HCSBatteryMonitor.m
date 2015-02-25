@@ -35,7 +35,7 @@ static CGFloat const kBatteryLowLevel = 20.f;
     self = [super init];
     
     if (self) {
-        _reportOnCharging = YES;
+        _reportOnlyOnDischarging = YES;
         _batteryLevel = HCSBatteryLevelUnknown;
         _percentages = nil;
     }
@@ -69,7 +69,7 @@ static CGFloat const kBatteryLowLevel = 20.f;
     NSInteger batteryPercentage =  (NSInteger)(device.batteryLevel * 100);
     HCSBatteryLevel level = [self currentBatteryLevelForPercentage:batteryPercentage];
     
-    if (_reportOnCharging == NO) {
+    if (_reportOnlyOnDischarging == YES) {
         if (device.batteryState == UIDeviceBatteryStateCharging || device.batteryState == UIDeviceBatteryStateFull) {
             return;
         }
@@ -107,7 +107,7 @@ static CGFloat const kBatteryLowLevel = 20.f;
     NSInteger batteryPercentage =  (NSInteger)(device.batteryLevel * 100);
     UIDeviceBatteryState currentState = device.batteryState;
     
-    if (_reportOnCharging == NO) {
+    if (_reportOnlyOnDischarging == YES) {
         if (currentState == UIDeviceBatteryStateCharging || currentState == UIDeviceBatteryStateFull) {
             return;
         }
@@ -207,9 +207,11 @@ static CGFloat const kBatteryLowLevel = 20.f;
     }
 }
 
-#pragma mark - Setter
+- (void)notifyForBatteryLevel:(NSInteger)percentage {
+    _percentages = [NSSet setWithObject:[NSNumber numberWithInteger:percentage]];
+}
 
-- (void)setCustomPercentages:(NSArray *)percentages {
+- (void)notifyForBatteryLevels:(NSArray *)percentages {
     _percentages = [NSSet setWithArray:percentages];
 }
 
