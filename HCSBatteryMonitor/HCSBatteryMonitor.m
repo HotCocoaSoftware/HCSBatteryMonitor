@@ -35,7 +35,7 @@ static CGFloat const kBatteryLowLevel = 20.f;
     self = [super init];
     
     if (self) {
-        _reportOnlyOnDischarging = YES;
+        _reportLevelOnCharging = NO;
         _batteryLevel = HCSBatteryLevelUnknown;
         _percentages = nil;
     }
@@ -69,22 +69,24 @@ static CGFloat const kBatteryLowLevel = 20.f;
     NSInteger batteryPercentage =  (NSInteger)(device.batteryLevel * 100);
     HCSBatteryLevel level = [self currentBatteryLevelForPercentage:batteryPercentage];
     
-    if (_reportOnlyOnDischarging == YES) {
-        if (device.batteryState == UIDeviceBatteryStateCharging || device.batteryState == UIDeviceBatteryStateFull) {
+    if (_reportLevelOnCharging == NO) {
+        if (device.batteryState != UIDeviceBatteryStateUnknown) {
             return;
         }
     }
     
-    if (self.delegate && [self.delegate respondsToSelector:@selector(significantBatteryLevelChange:)]) {
-        if (level != self.batteryLevel) {
-            [self.delegate significantBatteryLevelChange:level];
+    if (device.batteryState != UIDeviceBatteryStateCharging) {
+        if (self.delegate && [self.delegate respondsToSelector:@selector(significantBatteryLevelChange:)]) {
+            if (level != self.batteryLevel) {
+                [self.delegate significantBatteryLevelChange:level];
+            }
         }
     }
     
     if (self.delegate && [self.delegate respondsToSelector:@selector(batteryLevelReached:)]) {
         [self.percentages enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
             NSNumber *value = obj;
-            if ([value integerValue] == batteryPercentage) {
+            if ([value integerValue] == (NSInteger)(batteryPercentage * 100)) {
                 [self.delegate batteryLevelReached:batteryPercentage];
             }
         }];
@@ -106,12 +108,6 @@ static CGFloat const kBatteryLowLevel = 20.f;
     UIDevice *device = notification.object;
     NSInteger batteryPercentage =  (NSInteger)(device.batteryLevel * 100);
     UIDeviceBatteryState currentState = device.batteryState;
-    
-    if (_reportOnlyOnDischarging == YES) {
-        if (currentState == UIDeviceBatteryStateCharging || currentState == UIDeviceBatteryStateFull) {
-            return;
-        }
-    }
     
     if (self.delegate && [self.delegate respondsToSelector:@selector(currentBatteryStateChanged:)]) {
         [self.delegate currentBatteryStateChanged:currentState];
@@ -165,7 +161,7 @@ static CGFloat const kBatteryLowLevel = 20.f;
 - (NSInteger)currentBatteryPercentage {
     UIDevice *device = [UIDevice currentDevice];
     if (self.isMonitoring) {
-        return [self currentBatteryLevelForPercentage:(NSInteger)(device.batteryLevel * 100)];
+        return (NSInteger)(device.batteryLevel * 100);
     } else {
         [self activateBatteryMonitoring:YES];
         NSInteger percentage = (NSInteger)(device.batteryLevel * 100);

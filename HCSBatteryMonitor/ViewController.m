@@ -11,7 +11,9 @@
 
 @interface ViewController () <HCSBatteryMonitorDelegate>
 
-@property (nonatomic, strong) UITextView *textView;
+@property (weak, nonatomic) IBOutlet UILabel *batteryStateLabel;
+@property (weak, nonatomic) IBOutlet UILabel *batteryLevelLabel;
+@property (weak, nonatomic) IBOutlet UILabel *batteryLevelTypeLabel;
 @property (nonatomic, strong) HCSBatteryMonitor *batteryMonitor;
 
 @end
@@ -23,80 +25,63 @@
 }
 
 - (void)viewDidAppear:(BOOL)animated {
-    [self logToScreen:@"Started Monitorng"];
     self.batteryMonitor.delegate = self;
     [self.batteryMonitor startMonitoring];
     [self.batteryMonitor notifyForBatteryLevels:@[@20, @30, @40]];
+    self.batteryLevelTypeLabel.text = [self textForBatteryLevel:[self.batteryMonitor batteryLevel]];
+    self.batteryStateLabel.text = [self textForState:[self.batteryMonitor batteryState]];
+    self.batteryLevelLabel.text = [NSString stringWithFormat:@"%ld",[self.batteryMonitor currentBatteryPercentage]];
 }
 
 #pragma mark - HCSBatteryMonitorDelegate
 
 - (void)batteryLevelReached:(NSInteger)percentage {
-    NSString *message = [NSString stringWithFormat:@"batteryLevelReached:%ld", (long)percentage];
-    [self logToScreen:message];
+    self.batteryLevelLabel.text = [NSString stringWithFormat:@"%ld", (long)percentage];
 }
 
 - (void)significantBatteryLevelChange:(HCSBatteryLevel)level {
-    NSString *message = @"significantBatteryLevelChange:";
-    
-    switch (level) {
-        case HCSBatteryLevelCriticallyLow:message = [message stringByAppendingString:@"CriticallyLow"];
-            break;
-        case HCSBatteryLevelLow:message = [message stringByAppendingString:@"Low"];
-            break;
-        case HCSBatteryLevelNormal:message = [message stringByAppendingString:@"Normal"];
-            break;
-        case HCSBatteryLevelFull:message = [message stringByAppendingString:@"Full"];
-            break;
-        default: message = [message stringByAppendingString:@"Unknown"];
-            break;
-    }
-    
-    [self logToScreen:message];
+    self.batteryLevelTypeLabel.text = [self textForBatteryLevel:level];
 }
 
 - (void)currentBatteryStateChanged:(UIDeviceBatteryState)state {
-    NSString *message = @"currentBatteryStateChanged:";
+    self.batteryStateLabel.text = [self textForState:state];
+}
 
+- (void)currentBatteryLevelChanged:(NSInteger)percentage {
+    self.batteryLevelLabel.text = [NSString stringWithFormat:@"%ld", (long)percentage];
+}
+
+- (void)currentBatteryLevelChanged:(NSInteger)percentage state:(UIDeviceBatteryState)state {
+    self.batteryStateLabel.text = [self textForState:state];
+    self.batteryLevelLabel.text = [NSString stringWithFormat:@"%ld", (long)percentage];
+}
+
+#pragma mark - Helpers
+
+- (NSString *)textForState:(UIDeviceBatteryState)state {
+    NSLog(@"%ld", state);
     switch (state) {
-        case UIDeviceBatteryStateUnplugged:message = [message stringByAppendingString:@"Unplugged"];
-            break;
-        case UIDeviceBatteryStateCharging:message = [message stringByAppendingString:@"Charging"];
-            break;
-        case UIDeviceBatteryStateFull:message = [message stringByAppendingString:@"Full"];
-            break;
-        default: message = [message stringByAppendingString:@"Unknown"];
-            break;
+        case UIDeviceBatteryStateUnplugged:return @"Unplugged";
+        case UIDeviceBatteryStateCharging:return @"Charging";
+        case UIDeviceBatteryStateFull:return @"Full";
+        default:return @"Unknown";
     }
-    
-    [self logToScreen:message];
 }
 
-- (void)currentBatteryLevelChanged:(NSInteger)batteryLevel {
-    NSString *message = [NSString stringWithFormat:@"currentBatteryLevelChanged:%ld", (long)batteryLevel];
-    [self logToScreen:message];
-}
-
-- (void)currentBatteryLevelChanged:(NSInteger)batteryLevel state:(UIDeviceBatteryState)state {
-    NSString *message = [NSString stringWithFormat:@"currentBatteryLevelChanged:%ld state:", (long)batteryLevel];
-    switch (state) {
-        case UIDeviceBatteryStateUnplugged:message = [message stringByAppendingString:@"Unplugged"];
-            break;
-        case UIDeviceBatteryStateCharging:message = [message stringByAppendingString:@"Charging"];
-            break;
-        case UIDeviceBatteryStateFull:message = [message stringByAppendingString:@"Full"];
-            break;
-        default: message = [message stringByAppendingString:@"Unknown"];
-            break;
+- (NSString *)textForBatteryLevel:(HCSBatteryLevel)level {
+    switch (level) {
+        case HCSBatteryLevelCriticallyLow:return @"CriticallyLow";
+        case HCSBatteryLevelLow:return @"Low";
+        case HCSBatteryLevelNormal:return @"Normal";
+        case HCSBatteryLevelFull:return @"Full";
+        default:return @"Unknown";
     }
-
-    [self logToScreen:message];
 }
 
-#pragma mark - Helper
+#pragma mark - Actions
 
-- (void)logToScreen:(NSString *)message {
-    self.textView.text = [NSString stringWithFormat:@"%@\n----------\n%@", self.textView.text, message];
+- (IBAction)reportOnChargingSwitch:(UISwitch *)sender {
+    self.batteryMonitor.reportLevelOnCharging = sender.isOn;
 }
 
 #pragma mark - Lazy Initializer
@@ -107,15 +92,6 @@
     }
     
     return _batteryMonitor;
-}
-
-- (UITextView *)textView {
-    if (!_textView) {
-        _textView = [[UITextView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        [self.view addSubview:_textView];
-    }
-    
-    return _textView;
 }
 
 @end
