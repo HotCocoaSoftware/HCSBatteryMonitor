@@ -86,7 +86,7 @@ static CGFloat const kBatteryLowLevel = 20.f;
     if (self.delegate && [self.delegate respondsToSelector:@selector(batteryLevelReached:)]) {
         [self.percentages enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
             NSNumber *value = obj;
-            if ([value integerValue] == (NSInteger)(batteryPercentage * 100)) {
+            if ([value integerValue] == floor(batteryPercentage * 100)) {
                 [self.delegate batteryLevelReached:batteryPercentage];
             }
         }];
@@ -106,7 +106,7 @@ static CGFloat const kBatteryLowLevel = 20.f;
 - (void)batteryStateChanged:(NSNotification *)notification {
     
     UIDevice *device = notification.object;
-    NSInteger batteryPercentage =  (NSInteger)(device.batteryLevel * 100);
+    NSInteger batteryPercentage =  floor(device.batteryLevel * 100);
     UIDeviceBatteryState currentState = device.batteryState;
     
     if (self.delegate && [self.delegate respondsToSelector:@selector(currentBatteryStateChanged:)]) {
